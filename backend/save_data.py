@@ -1,31 +1,28 @@
-from sqlalchemy import create_engine, text
+import sqlite3
 
-# ======================================================
-# MYSQL CONNECTION
-# ======================================================
-
-engine = create_engine(
-    "mysql+pymysql://root:root123@localhost/expense_tracker"
+conn = sqlite3.connect(
+    "expense_tracker.db",
+    check_same_thread=False
 )
+
+cursor = conn.cursor()
 
 # ======================================================
 # CREATE EXPENSE TABLE
 # ======================================================
 
-with engine.connect() as conn:
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS expenses(
+    Date TEXT,
+    Month TEXT,
+    Year INTEGER,
+    Category TEXT,
+    Withdrawal REAL,
+    Username TEXT
+)
+""")
 
-    conn.execute(text("""
-    CREATE TABLE IF NOT EXISTS expenses(
-        Date TEXT,
-        Month TEXT,
-        Year INT,
-        Category TEXT,
-        Withdrawal FLOAT,
-        Username TEXT
-    )
-    """))
-
-    conn.commit()
+conn.commit()
 
 # ======================================================
 # SAVE EXPENSE DATA
@@ -44,7 +41,7 @@ def save_expense_data(df):
 
     df.to_sql(
         "expenses",
-        con=engine,
+        conn,
         if_exists="append",
         index=False
     )

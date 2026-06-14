@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine
+import sqlite3
 import pandas as pd
 
-engine = create_engine(
-    "mysql+pymysql://root:root123@localhost/expense_tracker"
+conn = sqlite3.connect(
+    "expense_tracker.db",
+    check_same_thread=False
 )
 
 # ======================================================
@@ -16,7 +17,7 @@ def load_expense_data():
     FROM expenses
     """
 
-    df = pd.read_sql(query, engine)
+    df = pd.read_sql(query, conn)
 
     df.rename(
         columns={

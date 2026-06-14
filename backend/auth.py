@@ -1,20 +1,25 @@
-from sqlalchemy import create_engine, text
+import sqlite3
 
-engine = create_engine(
-    "mysql+pymysql://root:root123@localhost/expense_tracker"
+conn = sqlite3.connect(
+    "expense_tracker.db",
+    check_same_thread=False
 )
 
-with engine.connect() as conn:
+cursor = conn.cursor()
 
-    conn.execute(text("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255) UNIQUE,
-        password VARCHAR(255)
-    )
-    """))
+# ======================================================
+# CREATE USERS TABLE
+# ======================================================
 
-    conn.commit()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT
+)
+""")
+
+conn.commit()
 
 # ======================================================
 # CREATE USER
@@ -24,20 +29,15 @@ def create_user(username, password):
 
     try:
 
-        with engine.connect() as conn:
+        cursor.execute(
+            """
+            INSERT INTO users(username, password)
+            VALUES(?,?)
+            """,
+            (username, password)
+        )
 
-            conn.execute(
-                text("""
-                INSERT INTO users(username, password)
-                VALUES(:username, :password)
-                """),
-                {
-                    "username": username,
-                    "password": password
-                }
-            )
-
-            conn.commit()
+        conn.commit()
 
         return True
 
@@ -51,21 +51,14 @@ def create_user(username, password):
 
 def login_user(username, password):
 
-    with engine.connect() as conn:
+    cursor.execute(
+        """
+        SELECT * FROM users
+        WHERE username=? AND password=?
+        """,
+        (username, password)
+    )
 
-        result = conn.execute(
-            text("""
-            SELECT *
-            FROM users
-            WHERE username=:username
-            AND password=:password
-            """),
-            {
-                "username": username,
-                "password": password
-            }
-        )
-
-        user = result.fetchone()
+    user = cursor.fetchone()
 
     return user
